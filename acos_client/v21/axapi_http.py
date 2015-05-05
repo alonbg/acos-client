@@ -2,7 +2,7 @@
 
 # Copyright 2014,  Doug Wiegley,  A10 Networks.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
 #
@@ -70,31 +70,31 @@ broken_replies = {
     ('<?xml version="1.0" encoding="utf-8" ?><response status="fail">'
      '<error code="999" msg=" Partition does not exist. '
      '(internal error: 520749062)" /></response>'):
-    (json.dumps({"response": {"status": "fail", "err": {"code": 999,
-     "msg": " Partition does not exist."}}})),
+        (json.dumps({"response": {"status": "fail", "err": {"code": 999,
+                                                            "msg": " Partition does not exist."}}})),
 
     ('<?xml version="1.0" encoding="utf-8" ?><response status="fail">'
      '<error code="999" msg=" Failed to get partition. (internal error: '
      '402718800)" /></response>'):
-    (json.dumps({"response": {"status": "fail", "err": {"code": 999,
-     "msg": " Partition does not exist."}}})),
+        (json.dumps({"response": {"status": "fail", "err": {"code": 999,
+                                                            "msg": " Partition does not exist."}}})),
 
     ('<?xml version="1.0" encoding="utf-8" ?><response status="fail">'
      '<error code="1076" msg="Invalid partition parameter." /></response>'):
-    (json.dumps({"response": {"status": "fail", "err": {"code": 1076,
-     "msg": "Invalid partition parameter."}}})),
+        (json.dumps({"response": {"status": "fail", "err": {"code": 1076,
+                                                            "msg": "Invalid partition parameter."}}})),
 
     ('<?xml version="1.0" encoding="utf-8" ?><response status="fail">'
      '<error code="999" msg=" No such aFleX. (internal error: '
      '17039361)" /></response>'):
-    (json.dumps({"response": {"status": "fail", "err": {"code": 17039361,
-     "msg": " No such aFleX."}}})),
+        (json.dumps({"response": {"status": "fail", "err": {"code": 17039361,
+                                                            "msg": " No such aFleX."}}})),
 
     ('<?xml version="1.0" encoding="utf-8" ?><response status="fail">'
      '<error code="999" msg=" This aFleX is in use. (internal error: '
      '17039364)" /></response>'):
-    (json.dumps({"response": {"status": "fail", "err": {"code": 17039364,
-     "msg": " This aFleX is in use."}}})),
+        (json.dumps({"response": {"status": "fail", "err": {"code": 17039364,
+                                                            "msg": " This aFleX is in use."}}})),
 
 }
 
@@ -112,22 +112,21 @@ class HttpClient(object):
 
     headers = {}
 
-    def __init__(self, host, port=None, protocol="https", client=None):
+    def __init__(self, host, port=None, timeout=None, protocol="https", client=None):
         self.host = host
         self.port = port
+        self.timeout = timeout
         self.protocol = protocol
+
         if port is None:
-            if protocol is 'http':
-                self.port = 80
-            else:
-                self.port = 443
+            self.port = 80 if protocol is 'http' else 443
 
     def _http(self, method, api_url, payload):
         if self.protocol == 'https':
-            http = httplib.HTTPSConnection(self.host, self.port)
+            http = httplib.HTTPSConnection(self.host, self.port, timeout=self.timeout)
             http.connect = lambda: force_tlsv1_connect(http)
         else:
-            http = httplib.HTTPConnection(self.host, self.port)
+            http = httplib.HTTPConnection(self.host, self.port, timeout=self.timeout)
 
         LOG.debug("axapi_http: url:     %s", api_url)
         LOG.debug("axapi_http: method:  %s", method)
@@ -177,7 +176,7 @@ class HttpClient(object):
             except socket.error as e:
                 # Workaround some bogosity in the API
                 if (e.errno == errno.ECONNRESET or
-                   e.errno == errno.ECONNREFUSED):
+                        e.errno == errno.ECONNREFUSED):
                     time.sleep(0.1)
                     last_e = e
                     continue
@@ -190,8 +189,8 @@ class HttpClient(object):
                 if e.response.status != httplib.OK:
                     msg = dict(e.response.msg.items())
                     data = json.dumps({"response": {'status': 'fail', 'err':
-                                      {'code': e.response.status,
-                                       'msg': msg}}})
+                                                    {'code': e.response.status,
+                                                        'msg': msg}}})
                 else:
                     data = json.dumps({"response": {"status": "OK"}})
                 break
@@ -219,8 +218,8 @@ class HttpClient(object):
 
         if 'response' in r and 'status' in r['response']:
             if r['response']['status'] == 'fail':
-                    acos_responses.raise_axapi_ex(
-                        r, action=extract_method(api_url))
+                acos_responses.raise_axapi_ex(
+                    r, action=extract_method(api_url))
 
         return r
 
